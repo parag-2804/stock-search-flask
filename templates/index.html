@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock Search</title>
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/drag-panes.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/accessibility.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            /*background-color: #F8F9FA;*/
+            background-image: url("/static/img/back.svg");
+            background-position: 0px -100px;
+            background-repeat: no-repeat;
+        }
+
+        h1 {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            
+        }
+
+
+        .form button {
+            border: none;
+            background: none;
+            color: #8b8ba7;
+        }
+
+        /* styling of whole input container */
+        .form {
+            position: relative;
+            width: 400px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            padding-inline: 0.8em;
+            border-radius: 30px;
+            transition: border-radius 0.5s ease;
+            background: #fff;
+        }
+
+        /* styling of Input */
+        .input {
+            font-size: 0.9rem;
+            background-color: transparent;
+            width: 100%;
+            height: 100%;
+            padding-inline: 0.5em;
+            padding-block: 0.7em;
+            border: none;
+        }
+
+        /* styling of animated border */
+        .form:before {
+            content: "";
+            position: absolute;
+            background: #2f2ee9;
+            transform: scaleX(0);
+            transform-origin: center;
+            width: 100%;
+            height: 2px;
+            left: 0;
+            bottom: 0;
+            border-radius: 1px;
+            transition: transform 0.3s ease;
+        }
+
+        /* Hover on Input */
+        .form:focus-within {
+            border-radius: 4px;
+        }
+
+        input:focus {
+            outline: none;
+        }
+
+        /* here is code of animated border */
+        .form:focus-within:before {
+            transform: scale(1);
+        }
+
+        /* styling of close button */
+        /* == you can click the close button to remove text == */
+        .reset {
+            border: none;
+            background: none;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* close button shown when typing */
+        input:not(:placeholder-shown) ~ .reset {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* sizing svg icons */
+        .form svg {
+            width: 17px;
+            margin-top: 3px;
+        }
+
+        .radio-inputs {
+            position: relative;
+            display: flex;
+            flex-wrap: wrap;
+            border-radius: 0.5rem;
+            background-color: #EEE;
+            box-sizing: border-box;
+            box-shadow: 0 0 0px 1px rgba(0, 0, 0, 0.06);
+            padding: 0.25rem;
+            width: 500px;
+            font-size: 14px;
+            margin-top: 40px;
+        }
+
+        .radio-inputs .radio {
+            flex: 1 1 auto;
+            text-align: center;
+        }
+
+        .radio-inputs .radio input {
+            display: none;
+        }
+
+        .radio-inputs .radio .name {
+            display: flex;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            border: none;
+            padding: .5rem 0;
+            color: rgba(51, 65, 85, 1);
+            transition: all .15s ease-in-out;
+        }
+
+        .radio-inputs .radio input:checked + .name {
+            background-color: #fff;
+            font-weight: 600;
+        }
+
+        .info-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        #main-content-container {
+            display: none;
+        }
+
+        #tab-company-info {
+            display: block;
+        }
+
+        #tab-stock-summary {
+            display: none;
+        }
+
+        #tab-charts {
+            display: none;
+        }
+
+        #tab-news {
+            display: none;
+        }
+
+        #errorContainer {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            color: #721c24;
+        }
+
+        .tabcontent {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin-top: 20px;
+
+        }
+
+        #companyTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #companyTable td:first-child {
+            text-align: right;
+            font-weight: bold;
+            width: 50%;
+            padding: 5px 10px; /* add a gap between the text and the border */
+            /*border-top: 1px solid black; !* add a border to the top of the first row *!*/
+        }
+
+        #companyTable td:last-child {
+            text-align: left;
+            width: 50%;
+            padding: 5px 10px; /* add a gap between the text and the border */
+        }
+
+        #companyTable tr {
+            border-top: 1px solid #CCCCCC; /* add a border to the bottom of each row */
+        }
+
+        #companyTable tr:last-child {
+            border-bottom: 1px solid #CCCCCC;
+        }
+
+        .company-logo {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+        }
+
+        .reccomendation-container {
+            margin-top: 20px;
+            display: flex;
+            width: 100%;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .reccomendationBox {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            color: #fff;
+            align-items: center;
+        }
+
+        .news-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            width: 800px;
+            margin-top: 20px;
+            gap: 20px;
+            background: #F5F5FA;
+            border-radius: 10px;
+            padding: 0px 20px 20px 20px;
+        }
+
+        .news-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+        }
+
+        .news-data {
+            flex: 1;
+        }
+
+        .loader {
+            display: none;
+            --height-of-loader: 4px;
+            --loader-color: #0071e2;
+            width: 130px;
+            height: var(--height-of-loader);
+            border-radius: 30px;
+            background-color: rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .loader::before {
+            content: "";
+            position: absolute;
+            background: var(--loader-color);
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            border-radius: 30px;
+            animation: moving 1s ease-in-out infinite;;
+        }
+
+        @keyframes moving {
+            50% {
+                width: 100%;
+            }
+
+            100% {
+                width: 0;
+                right: 0;
+                left: unset;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+
+<h1>Stock Search</h1>
+<div class="info-container">
+    <form id="stockForm" class="form">
+        <button type="submit" onclick="submitNewSymbol(event)">
+            <svg width="17" height="16" fill="none" xmlns="http://www.w3.org/2000/svg" role="img"
+                 aria-labelledby="search">
+                <path d="M7.667 12.667A5.333 5.333 0 107.667 2a5.333 5.333 0 000 10.667zM14.334 14l-2.9-2.9"
+                      stroke="currentColor" stroke-width="1.333" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+        </button>
+        <input id="symbol" class="input" placeholder="Type your text" required="" type="text">
+        <button class="reset" type="reset" onclick="hideMainContentContainerAndClearAllTabs()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor"
+                 stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </form>
+</div>
+
+<div class="info-container" id="main-content-container">
+    <div class="radio-inputs" id="tab-input-radio">
+        <label class="radio">
+            <input type="radio" name="tab" value="tab-company-info" id="radio-company-info" checked
+                   onclick="openCompanyInfoTab()">
+            <span class="name">Company</span>
+        </label>
+        <label class="radio">
+            <input type="radio" name="tab" value="tab-stock-summary" id="radio-stock-summary"
+                   onclick="openStockSummaryTab()">
+            <span class="name">Stock Summary</span>
+        </label>
+        <label class="radio">
+            <input type="radio" name="tab" value="tab-charts" id="radio-charts" onclick="openChartsTab()">
+            <span class="name">Charts</span>
+        </label>
+        <label class="radio">
+            <input type="radio" name="tab" value="tab-news" id="radio-news" onclick="openNewsTab()">
+            <span class="name">Latest News</span>
+        </label>
+
+    </div>
+    <div id="tab-company-info" class="tabcontent glass">
+    </div>
+    <div id="tab-stock-summary" class="tabcontent glass">
+    </div>
+    <div id="tab-charts" class="tabcontent glass">
+        <!--        <div id="chartContainer"></div>-->
+    </div>
+    <div id="tab-news" class="tabcontent glass">
+    </div>
+</div>
+<div id="errorContainer">Hello</div>
+<div class="info-container" style="margin-top: 30px">
+    <div id="loader" class="loader"></div>
+</div>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
